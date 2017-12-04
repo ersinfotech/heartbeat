@@ -29,29 +29,46 @@ var data = {
 
 var type = 'start'
 var interval = 0
+var disableDetectRequest = false
+var detectRequestInterval = 15
 
-module.exports = function() {
+var ping = function() {
+  request({
+    method: 'post',
+    url: 'http://heartbeat-api.ersinfotech.com/graphql',
+    json: true,
+    body: {
+      query: "mutation ping ($ip: String! $path: String! $type: String) {ping(ip: $ip path: $path type: $type)}",
+      variables: {
+        ip: data.ip,
+        path: data.path,
+        type: type,
+      },
+    },
+  })
+  .catch(function(err) {
+    console.error(err.message)
+  })
+}
+
+var loop = function() {
   setTimeout(function() {
-    if (moment().diff(lastRequestTime, 'minutes', true) < 10) {
-      request({
-        method: 'post',
-        url: 'http://heartbeat-api.ersinfotech.com/graphql',
-        json: true,
-        body: {
-          query: "mutation ping ($ip: String! $path: String! $type: String) {ping(ip: $ip path: $path type: $type)}",
-          variables: {
-            ip: data.ip,
-            path: data.path,
-            type: type,
-          },
-        },
-      })
-      .catch(function(err) {
-        console.error(err.message)
-      })
+    if (disableDetectRequest) {
+      ping()
+    } else if (moment().diff(lastRequestTime, 'minutes', true) < detectRequestInterval) {
+      ping()
     }
     type = 'live'
     interval = 30
-    module.exports()
+    loop()
   }, interval * 1000)
 }
+
+module.exports = function(options) {
+  options = options || {}
+  disableDetectRequest = options.disableDetectRequest || disableDetectRequest
+  detectRequestInterval = options.detectRequestInterval || detectRequestInterval
+  loop()
+}
+
+module.exports()
