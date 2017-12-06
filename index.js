@@ -70,5 +70,3 @@ module.exports = function(options) {
   detectRequestInterval = options.detectRequestInterval || detectRequestInterval
   loop()
 }
-
-module.exports()
