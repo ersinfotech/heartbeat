@@ -1,2 +1,4 @@
-var heartbeat = require('.')
-heartbeat()
+var heartbeat = require('./index')
+heartbeat({
+  detectRequestInterval: 1,
+})
