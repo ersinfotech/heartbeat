@@ -15,7 +15,9 @@ if (process.env.NODE_ENV === 'production') {
 
 ```graphql
 type Options {
+  id: String
   disableDetectRequest: Boolean = false
+  disableRestart: Boolean = false
   detectRequestInterval: Int = 15
 }
 ```

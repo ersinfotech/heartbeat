@@ -22,26 +22,26 @@ https.request = function (options) {
   return originHttpsRequest.apply(this, arguments)
 }
 
-var data = {
-  ip: ip.address(),
-  path: process.cwd(),
-}
-
+var id
+var address = ip.address()
+var path = process.cwd()
 var type = 'start'
 var interval = 0
 var disableDetectRequest = false
+var disableRestart = false
 var detectRequestInterval = 15
 
 var ping = function() {
-  request({
+  return request({
     method: 'post',
     url: 'http://heartbeat-api.ersinfotech.com/graphql',
     json: true,
     body: {
-      query: "mutation ping ($ip: String! $path: String! $type: String) {ping(ip: $ip path: $path type: $type)}",
+      query: "mutation ping ($id: String $ip: String! $path: String! $type: String) {ping(id: $id ip: $ip path: $path type: $type)}",
       variables: {
-        ip: data.ip,
-        path: data.path,
+        id: id,
+        ip: address,
+        path: path,
         type: type,
       },
     },
@@ -57,6 +57,11 @@ var loop = function() {
       ping()
     } else if (moment().diff(lastRequestTime, 'minutes', true) < detectRequestInterval) {
       ping()
+    } else if (!disableRestart) {
+      type = 'restart'
+      ping().then(function() {
+        process.exit()
+      })
     }
     type = 'live'
     interval = 30
@@ -66,7 +71,9 @@ var loop = function() {
 
 module.exports = function(options) {
   options = options || {}
+  id = options.id
   disableDetectRequest = options.disableDetectRequest || disableDetectRequest
+  disableRestart = options.disableRestart || disableRestart
   detectRequestInterval = options.detectRequestInterval || detectRequestInterval
   loop()
 }
