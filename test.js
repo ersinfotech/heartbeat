@@ -1,0 +1,2 @@
+var heartbeat = require('.')
+heartbeat()
